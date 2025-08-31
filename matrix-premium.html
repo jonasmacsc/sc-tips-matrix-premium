@@ -7,48 +7,23 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* Timer visual */
-    #timer {
-      font-size: 28px;
-      font-weight: bold;
-      text-align: center;
-      margin: 14px 0;
-      color: var(--gold);
-    }
-    /* Área de logs */
-    #logBox {
-      background: #0a0f1a;
-      border: 1px solid var(--stroke);
-      border-radius: 12px;
-      padding: 12px;
-      font-family: monospace;
-      font-size: 13px;
-      height: 220px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      color: var(--muted);
-    }
-    .btn-sm {
-      font-size: 12px;
-      padding: 6px 10px;
-      margin: 4px 2px;
-    }
+    #timer{font-size:28px;font-weight:700;text-align:center;margin:14px 0;color:var(--gold)}
+    #logBox{background:#0a0f1a;border:1px solid var(--stroke);border-radius:12px;padding:12px;font-family:monospace;font-size:13px;height:260px;overflow-y:auto;white-space:pre-wrap;color:var(--muted)}
+    .btn-sm{font-size:12px;padding:6px 10px;margin:4px 2px}
   </style>
 </head>
 <body>
 <header>
   <nav>
     <div class="brand"><img src="assets/logo.png" alt=""><span>SC TIPS</span></div>
-    <a href="/">Início</a><a href="/estrategias">Estratégias</a>
-    <a href="/matrix-premium">Matrix Premium</a><a href="/puxadores">Puxadores Live</a><a href="/contato">Contato</a>
+    <a href="/">Início</a><a href="/estrategias">Estratégias</a><a href="/matrix-premium">Matrix Premium</a><a href="/puxadores">Puxadores Live</a><a href="/contato">Contato</a>
   </nav>
 </header>
 
 <main class="wrap">
   <h1>⚡ Matrix Premium</h1>
-  <p class="muted">Timer 18s, logs em tempo real e previsões.</p>
+  <p class="muted">Timer 18s cíclico, logs e previsões.</p>
 
-  <!-- Timer -->
   <div class="card">
     <h3>Timer Principal (18s)</h3>
     <div id="timer">00:18</div>
@@ -59,12 +34,12 @@
     </div>
   </div>
 
-  <!-- Logs -->
   <div class="card">
     <h3>📜 Logs de Eventos</h3>
+    <div class="pill"><span>Fonte:</span> site / evo / pragmatic / bridge</div>
     <div id="logBox">[Console pronto]\n</div>
-    <div style="text-align:right">
-      <button id="clearBtn" class="btn btn-sm">🧹 Limpar</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="clearBtn" class="btn btn-sm ghost">🧹 Limpar</button>
       <button id="exportBtn" class="btn btn-sm">📄 Exportar TXT</button>
     </div>
   </div>
@@ -74,50 +49,32 @@
 
 <script>
 /* ===== Timer 18s ===== */
-let timerInterval;
-let timeLeft = 18;
-function updateTimerDisplay() {
-  const t = timeLeft.toString().padStart(2,'0');
-  document.getElementById('timer').textContent = `00:${t}`;
-}
-function startTimer() {
-  clearInterval(timerInterval);
-  updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    if(timeLeft < 0){
-      logEvent("⏰ Ciclo 18s concluído!");
-      timeLeft = 18;
-    }
-    updateTimerDisplay();
-  },1000);
-}
-function stopTimer(){ clearInterval(timerInterval); }
-function resetTimer(){
-  clearInterval(timerInterval);
-  timeLeft = 18;
-  updateTimerDisplay();
-}
+let timerInterval; let timeLeft = 18;
+const timerEl = document.getElementById('timer');
+function draw(){ timerEl.textContent = `00:${String(timeLeft).padStart(2,'0')}`; }
+function start(){ clearInterval(timerInterval); draw(); timerInterval=setInterval(()=>{ timeLeft--; if(timeLeft<0){ log("⏰ Ciclo 18s concluído"); timeLeft=18; } draw(); },1000); }
+function stop(){ clearInterval(timerInterval); }
+function reset(){ clearInterval(timerInterval); timeLeft=18; draw(); }
+document.getElementById('startBtn').onclick=()=>{start();log("▶ Timer iniciado");};
+document.getElementById('stopBtn').onclick =()=>{stop();log("⏹ Timer parado");};
+document.getElementById('resetBtn').onclick=()=>{reset();log("🔄 Timer resetado");};
 
 /* ===== Logs ===== */
-function logEvent(msg){
-  const logBox = document.getElementById('logBox');
-  const ts = new Date().toLocaleTimeString();
-  logBox.textContent += `[${ts}] ${msg}\n`;
-  logBox.scrollTop = logBox.scrollHeight;
-}
-document.getElementById('startBtn').onclick = () => { startTimer(); logEvent("▶ Timer iniciado"); };
-document.getElementById('stopBtn').onclick  = () => { stopTimer(); logEvent("⏹ Timer parado"); };
-document.getElementById('resetBtn').onclick = () => { resetTimer(); logEvent("🔄 Timer resetado"); };
-document.getElementById('clearBtn').onclick = () => { document.getElementById('logBox').textContent=""; };
-document.getElementById('exportBtn').onclick = () => {
-  const text = document.getElementById('logBox').textContent;
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text],{type:'text/plain'}));
-  a.download = "logs-matrix-premium.txt";
-  a.click();
-  URL.revokeObjectURL(a.href);
+const logBox = document.getElementById('logBox');
+function log(m){ const ts=new Date().toLocaleTimeString(); logBox.textContent += `[${ts}] ${m}\n`; logBox.scrollTop=logBox.scrollHeight; }
+document.getElementById('clearBtn').onclick=()=>{ logBox.textContent=''; };
+document.getElementById('exportBtn').onclick=()=>{
+  const a=document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([logBox.textContent],{type:'text/plain'}));
+  a.download='logs-matrix-premium.txt'; a.click(); URL.revokeObjectURL(a.href);
 };
+
+/* ===== Hooks p/ integrar depois (exemplo) ===== */
+// window.dispatchEvent(new CustomEvent('sc:number',{detail:{number:29,platform:'pragmatic',dealer:'Carlos',at:Date.now()}}));
+window.addEventListener('sc:number', (e)=>{
+  const {number, platform, dealer} = e.detail||{};
+  log(`🎲 ${platform||'site'} • Nº ${number} • Dealer ${dealer||'-'}`);
+});
 </script>
 </body>
 </html>
