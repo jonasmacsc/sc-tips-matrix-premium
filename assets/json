@@ -1,1 +1,25 @@
-
+{
+  "name": "SC Tips Matrix Premium",
+  "short_name": "SC Tips",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0b0f",
+  "theme_color": "#00ff00",
+  "icons": [
+    {
+      "src": "assets/logo-64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
