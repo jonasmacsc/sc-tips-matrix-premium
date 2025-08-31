@@ -1,111 +1,58 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>⚡ SC Tips • Matrix Premium — Painel</title>
-  <meta name="theme-color" content="#0b0a05">
-  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="assets/img/logo-vem-e-ve-sc.svg" as="image">
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SC TIPS — Painel Premium</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="wrap">
-    <div class="header">
-      <img src="assets/img/logo-vem-e-ve-sc.svg" alt="VEM E VE SC Logo">
-      <div class="h1">Matrix Premium — SC TIPS</div>
-      <span class="badge">Build: 2025-08-31 11:42 • PRO (Theme+Hist+TG)</span>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <h3>🎯 Estratégia Ativa</h3>
-        <div class="row">
-          <select id="strategy"></select>
-          <label class="switch"><input type="checkbox" id="auto" checked> Auto</label>
-          <button id="btnTimer" class="btn-primary">▶️ Iniciar 18s</button>
-          <div class="pill">⏱️ <b id="tLeft">18</b>s</div>
-          <div class="pill">Vizinhos: <span id="neighborsVal">2</span></div>
-          <input type="range" id="neighbors" min="0" max="3" value="2" step="1" />
-          <button id="btnExport">📄 Exportar CSV</button>
-        </div>
-        <div class="split" style="margin-top:8px">
-          <div>
-            <div class="pill">Nome: <b id="str-nome"></b></div>
-            <div class="pill">Gatilho: <b id="str-gatilho"></b></div>
-            <div class="pill">Base: <b id="str-base"></b></div>
-            <div class="pill">Proteção: <b id="str-prot"></b></div>
-            <small>Somente números base exibidos. Vizinho (2) aplicado na lógica, não listado.</small>
-          </div>
-          <canvas id="raceCanvas"></canvas>
-        </div>
+  <header>
+    <nav>
+      <div class="brand">
+        <img src="assets/logo.png" alt="SC TIPS">
+        <span>SC TIPS • Premium</span>
       </div>
+      <a href="/">Início</a>
+      <a href="/estrategias">Estratégias</a>
+      <a href="/matrix-premium">Matrix Premium</a>
+      <a href="/puxadores">Puxadores Live</a>
+      <a href="/contato">Contato</a>
+    </nav>
+  </header>
 
-      <div class="card">
-        <h3>🛰️ Logs em Tempo Real & URLs WS</h3>
-
-        <div class="row" style="gap:8px; margin:8px 0;">
-          <input id="wsInput" type="text" placeholder="wss://... URL do WebSocket" style="flex:1; min-width:260px;">
-          <label class="pill"><input type="checkbox" id="wsMask"> Mascarar</label>
-          <button id="wsConnect" class="btn-primary">🔌 Conectar</button>
-          <button id="wsDisconnect">⏏️ Desconectar</button>
-          <div class="pill">Status: <b id="wsStatus">desconectado</b></div>
-        </div>
-
-        <div class="row">
-          <div class="pill">URLs WebSocket capturadas:</div>
-        </div>
-        <div id="wsUrls" class="row" style="margin:8px 0; gap:6px;"></div>
-        <div class="log" id="liveLog"></div>
+  <main class="wrap">
+    <section class="hero card">
+      <span class="tag">Online</span>
+      <h1>🔥 SC TIPS — Painel Premium</h1>
+      <p>Operação em tempo real, gatilhos inteligentes e UI otimizada.</p>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <a class="btn" href="/estrategias">Abrir Estratégias</a>
+        <a class="btn" href="/matrix-premium">Abrir Matrix</a>
+        <a class="btn" href="/puxadores">Abrir Puxadores</a>
       </div>
+    </section>
 
+    <section class="grid cols-3">
       <div class="card">
-        <h3>📈 KPIs</h3>
-        <div class="kpi">
-          <div class="item" id="kpi-ult"><div class="lbl">Último</div><div class="n">-</div></div>
-          <div class="item" id="kpi-greens"><div class="lbl">Greens</div><div class="n">0</div></div>
-          <div class="item" id="kpi-reds"><div class="lbl">Reds</div><div class="n">0</div></div>
-          <div class="item" id="kpi-alerts"><div class="lbl">Alertas</div><div class="n">0</div></div>
-        </div>
+        <h3>📊 Estratégias</h3>
+        <p class="muted">Ative/desative as 23 estratégias e gere entradas.</p>
+        <a class="btn" href="/estrategias">Abrir</a>
       </div>
-
       <div class="card">
-        <h3>🎛️ Tema & Modos</h3>
-        <div class="row" style="margin-bottom:8px">
-          <button id="btnThemeNavy">🌌 Tema Navy</button>
-          <button id="btnThemeGold" class="btn-primary">🏆 Tema Gold</button>
-          <label class="switch"><input type="checkbox" id="swTiroSeco"> Modo Tiro Seco (0 vizinhos)</label>
-        </div>
-        <small>Tema persiste no navegador (localStorage). Em Tiro Seco não aplicamos vizinhos.</small>
+        <h3>⚡ Matrix Premium</h3>
+        <p class="muted">Timer, logs em tempo real e previsões.</p>
+        <a class="btn" href="/matrix-premium">Abrir</a>
       </div>
-
       <div class="card">
-        <h3>🧾 Histórico (Últimos 30)</h3>
-        <div id="hist" class="log" style="max-height:220px"></div>
-        <div class="row" style="margin-top:8px">
-          <button id="btnExportHist">📄 Exportar Histórico</button>
-        </div>
+        <h3>🎯 Puxadores Live</h3>
+        <p class="muted">Vizinhos, histórico e exportação.</p>
+        <a class="btn" href="/puxadores">Abrir</a>
       </div>
+    </section>
+  </main>
 
-      <div class="card">
-        <h3>📣 Telegram</h3>
-        <div class="row">
-          <input id="tgToken" type="password" placeholder="Bot Token"/>
-          <input id="tgChat" type="text" placeholder="Chat ID (ex.: -1002211353341)"/>
-          <label class="switch"><input type="checkbox" id="tgOn"> Enviar alertas (Green/Red)</label>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button id="tgSave" class="btn-primary">💾 Salvar</button>
-          <button id="tgTest">🛠️ Teste</button>
-        </div>
-        <small>⚠️ Dica: por segurança, prefira enviar via backend proxy. No front, o token fica exposto.</small>
-      </div>
-    </div>
-
-    <div class="footer">© SC Tips — Painel Matrix Premium | PRO com tema alternável, histórico com GREEN/RED, e envio opcional para Telegram.</div>
-  </div>
-
-  <script type="module" src="assets/js/app.js"></script>
+  <div class="footer">© 2025 SC TIPS — Todos os direitos reservados.</div>
 </body>
 </html>
