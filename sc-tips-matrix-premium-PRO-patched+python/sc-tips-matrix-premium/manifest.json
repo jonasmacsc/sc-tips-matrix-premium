@@ -1,0 +1,15 @@
+{
+  "name": "SC Tips • Matrix Premium",
+  "short_name": "SC Tips",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0a05",
+  "theme_color": "#0b0a05",
+  "icons": [
+    {
+      "src": "assets/img/favicon.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
+    }
+  ]
+}
