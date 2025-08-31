@@ -14,15 +14,103 @@
     <a href="/">Início</a><a href="/estrategias">Estratégias</a><a href="/matrix-premium">Matrix Premium</a><a href="/puxadores">Puxadores Live</a><a href="/contato">Contato</a>
   </nav>
 </header>
+
 <main class="wrap">
   <h1>🎯 Puxadores Live</h1>
-  <p class="muted">Vizinhos, histórico e exportação. (Layout base pronto.)</p>
+  <p class="muted">Race Board na ordem real da roleta europeia (0–36, com 0 centralizado), últimos números e exportação.</p>
+
   <div class="grid cols-3">
-    <div class="card"><h3>Últimos números</h3><p class="muted">Feed em tempo real.</p></div>
-    <div class="card"><h3>Race Board</h3><p class="muted">Ordem correta 0–36, 0 ao centro.</p></div>
-    <div class="card"><h3>Exportar</h3><p class="muted">CSV / JSON.</p><a class="btn" href="#">Exportar</a></div>
+    <div class="card">
+      <h3>Race Board</h3>
+      <p class="muted">Clique para marcar/desmarcar números. (Vizinhos aplicados na lógica interna.)</p>
+      <div id="race" class="race"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn ghost" id="clearRace">Limpar</button>
+        <button class="btn" id="exportSel">Exportar Seleção</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Últimos Números</h3>
+      <div id="lasts" class="lasts"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn" id="fakePush">Simular Nº</button>
+        <button class="btn ghost" id="clearLasts">Limpar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Exportar</h3>
+      <p class="muted">Baixe as seleções e últimos números em JSON/CSV.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="expJSON">JSON</button>
+        <button class="btn ghost" id="expCSV">CSV</button>
+      </div>
+      <pre id="out" class="muted" style="margin-top:10px;white-space:pre-wrap"></pre>
+    </div>
   </div>
 </main>
+
 <div class="footer">© 2025 SC TIPS</div>
+
+<script>
+/* ===== Ordem real da roleta europeia (no “race”) =====
+0 – centro; anel: 32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26
+*/
+const wheelOrder = [32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+const colors = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]); // vermelhos
+const race = document.getElementById('race');
+const active = new Set();
+const lasts = [];
+const lastsEl = document.getElementById('lasts');
+const out = document.getElementById('out');
+
+function cell(n){
+  const d = document.createElement('div');
+  const cls = n===0?'green':(colors.has(n)?'red':'black');
+  d.className = `cell ${cls}`; d.textContent = n; d.dataset.n = n;
+  d.onclick = ()=>{ const v=+d.dataset.n;
+    if(active.has(v)){ active.delete(v); d.classList.remove('active'); }
+    else { active.add(v); d.classList.add('active'); }
+  };
+  return d;
+}
+// monta: linha do 0 central + duas linhas do anel
+race.appendChild(cell(0));
+wheelOrder.forEach(n=>race.appendChild(cell(n)));
+
+function pushLast(n){
+  lasts.unshift(n); if(lasts.length>20) lasts.pop();
+  renderLasts();
+}
+function renderLasts(){
+  lastsEl.innerHTML = '';
+  lasts.forEach(n=>{
+    const s = document.createElement('div'); s.className='n '+(n===0?'green':(colors.has(n)?'red':'black'));
+    s.textContent = n; lastsEl.appendChild(s);
+  });
+}
+
+document.getElementById('clearRace').onclick=()=>{ active.clear(); race.querySelectorAll('.cell.active').forEach(x=>x.classList.remove('active')); };
+document.getElementById('exportSel').onclick=()=>{ out.textContent = JSON.stringify({selecionados:[...active]}, null, 2); };
+document.getElementById('clearLasts').onclick=()=>{ lasts.length=0; renderLasts(); };
+document.getElementById('fakePush').onclick=()=>{ const n = Math.floor(Math.random()*37); pushLast(n); };
+
+/* Export global */
+document.getElementById('expJSON').onclick=()=>{
+  const payload = {selecionados:[...active], ultimos:lasts, ts:Date.now()};
+  out.textContent = JSON.stringify(payload, null, 2);
+};
+document.getElementById('expCSV').onclick=()=>{
+  const sel=[...active].join(';');
+  const csv = `selecionados;${sel}\nultimos;${lasts.join(';')}\n`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='puxadores.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* Hook para receber número em tempo real (integração posterior) */
+// window.dispatchEvent(new CustomEvent('sc:number',{detail:{number:29,platform:'pragmatic'}}));
+window.addEventListener('sc:number',(e)=>{ const n=(e.detail||{}).number; if(Number.isInteger(n)) pushLast(n); });
+</script>
 </body>
 </html>
