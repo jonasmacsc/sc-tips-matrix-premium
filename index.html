@@ -3,56 +3,269 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SC TIPS — Painel Premium</title>
+  <title>Matrix Premium — SC TIPS</title>
   <link rel="icon" href="assets/favicon.png">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    #timer{font-size:28px;font-weight:700;text-align:center;margin:14px 0;color:var(--gold)}
+    #logBox{background:#0a0f1a;border:1px solid var(--stroke);border-radius:12px;padding:12px;font-family:monospace;font-size:13px;height:260px;overflow-y:auto;white-space:pre-wrap;color:var(--muted)}
+    .btn-sm{font-size:12px;padding:6px 10px;margin:4px 2px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .row input[type="text"]{flex:1 1 360px;min-width:260px;padding:10px 12px;border:1px solid var(--stroke);border-radius:12px;background:#0e1422;color:var(--txt)}
+    .ok{color:var(--ok)} .err{color:var(--err)}
+    .kvs{display:flex;gap:8px;flex-wrap:wrap}
+    .kvs .pill{cursor:default}
+    .mono{font-family:monospace}
+  </style>
 </head>
 <body>
-  <header>
-    <nav>
-      <div class="brand">
-        <img src="assets/logo.png" alt="SC TIPS">
-        <span>SC TIPS • Premium</span>
-      </div>
-      <a href="/">Início</a>
-      <a href="/estrategias">Estratégias</a>
-      <a href="/matrix-premium">Matrix Premium</a>
-      <a href="/puxadores">Puxadores Live</a>
-      <a href="/contato">Contato</a>
-    </nav>
-  </header>
+<header>
+  <nav>
+    <div class="brand"><img src="assets/logo.png" alt=""><span>SC TIPS</span></div>
+    <a href="/">Início</a><a href="/estrategias">Estratégias</a><a href="/matrix-premium">Matrix Premium</a><a href="/puxadores">Puxadores Live</a><a href="/contato">Contato</a>
+  </nav>
+</header>
 
-  <main class="wrap">
-    <section class="hero card">
-      <span class="tag">Online</span>
-      <h1>🔥 SC TIPS — Painel Premium</h1>
-      <p>Operação em tempo real, gatilhos inteligentes e UI otimizada.</p>
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <a class="btn" href="/estrategias">Abrir Estratégias</a>
-        <a class="btn" href="/matrix-premium">Abrir Matrix</a>
-        <a class="btn" href="/puxadores">Abrir Puxadores</a>
-      </div>
-    </section>
+<main class="wrap">
+  <h1>⚡ Matrix Premium</h1>
+  <p class="muted">Timer 18s cíclico, conexão WebSocket, parse automático (Evolution/Pragmatic) e logs.</p>
 
-    <section class="grid cols-3">
-      <div class="card">
-        <h3>📊 Estratégias</h3>
-        <p class="muted">Ative/desative as 23 estratégias e gere entradas.</p>
-        <a class="btn" href="/estrategias">Abrir</a>
-      </div>
-      <div class="card">
-        <h3>⚡ Matrix Premium</h3>
-        <p class="muted">Timer, logs em tempo real e previsões.</p>
-        <a class="btn" href="/matrix-premium">Abrir</a>
-      </div>
-      <div class="card">
-        <h3>🎯 Puxadores Live</h3>
-        <p class="muted">Vizinhos, histórico e exportação.</p>
-        <a class="btn" href="/puxadores">Abrir</a>
-      </div>
-    </section>
-  </main>
+  <!-- Conectar WS -->
+  <div class="card">
+    <h3>🔌 Conexão em Tempo Real (WebSocket)</h3>
+    <div class="row" style="margin:10px 0">
+      <input id="wsUrl" type="text" placeholder="Cole a URL wss:// aqui (Evolution/Pragmatic/Bridge)" />
+      <button class="btn btn-sm" id="btnConnect">Conectar</button>
+      <button class="btn btn-sm ghost" id="btnDisconnect" disabled>Desconectar</button>
+      <button class="btn btn-sm ghost" id="btnSaveUrl">Salvar</button>
+      <button class="btn btn-sm ghost" id="btnCopyUrl">Copiar</button>
+      <label class="pill"><input type="checkbox" id="maskUrl" checked> Mascarar URL</label>
+    </div>
+    <div class="kvs">
+      <span class="pill">Status: <b id="wsStatus" class="err">Desconectado</b></span>
+      <span class="pill">Origem: <b id="wsOrigin">-</b></span>
+      <span class="pill">Mesa: <b id="wsTable">-</b></span>
+      <span class="pill">Dealer: <b id="wsDealer">-</b></span>
+      <span class="pill">Último Nº: <b id="wsNumber">-</b></span>
+    </div>
+  </div>
 
-  <div class="footer">© 2025 SC TIPS — Todos os direitos reservados.</div>
+  <!-- Timer -->
+  <div class="card">
+    <h3>⏱️ Timer Principal (18s)</h3>
+    <div id="timer">00:18</div>
+    <div style="text-align:center">
+      <button id="startBtn" class="btn btn-sm">▶ Iniciar</button>
+      <button id="stopBtn" class="btn btn-sm">⏹ Parar</button>
+      <button id="resetBtn" class="btn btn-sm">🔄 Reset</button>
+    </div>
+  </div>
+
+  <!-- Logs -->
+  <div class="card">
+    <h3>📜 Logs</h3>
+    <div class="row" style="margin-bottom:6px">
+      <input id="logFilter" type="text" placeholder="Filtrar (ex.: pragmatic, roulette.winSpots, 29, dealer)" />
+      <label class="pill"><input type="checkbox" id="fltRaw"> Mostrar frames brutos</label>
+      <button id="clearBtn" class="btn btn-sm ghost">🧹 Limpar</button>
+      <button id="exportBtn" class="btn btn-sm">📄 Exportar TXT</button>
+    </div>
+    <div id="logBox">[Console pronto]\n</div>
+  </div>
+</main>
+
+<div class="footer">© 2025 SC TIPS</div>
+
+<script>
+/* ================= Timer 18s ================= */
+let timerInterval; let timeLeft = 18;
+const timerEl = document.getElementById('timer');
+function drawTimer(){ timerEl.textContent = `00:${String(timeLeft).padStart(2,'0')}`; }
+function startTimer(){ clearInterval(timerInterval); drawTimer(); timerInterval=setInterval(()=>{ timeLeft--; if(timeLeft<0){ log('⏰ Ciclo 18s concluído'); timeLeft=18; } drawTimer(); },1000); }
+function stopTimer(){ clearInterval(timerInterval); }
+function resetTimer(){ clearInterval(timerInterval); timeLeft=18; drawTimer(); }
+document.getElementById('startBtn').onclick=()=>{ startTimer(); log('▶ Timer iniciado'); };
+document.getElementById('stopBtn').onclick =()=>{ stopTimer(); log('⏹ Timer parado'); };
+document.getElementById('resetBtn').onclick=()=>{ resetTimer(); log('🔄 Timer resetado'); };
+
+/* ================= Logs ================= */
+const logBox = document.getElementById('logBox');
+const logFilter = document.getElementById('logFilter');
+const fltRaw = document.getElementById('fltRaw');
+function log(m, raw=false){
+  if(raw && !fltRaw.checked) return;
+  const q=(logFilter.value||'').trim().toLowerCase();
+  const ts = new Date().toLocaleTimeString();
+  const line = `[${ts}] ${m}`;
+  if(q && !line.toLowerCase().includes(q)) return;
+  logBox.textContent += line + "\\n";
+  logBox.scrollTop = logBox.scrollHeight;
+}
+document.getElementById('clearBtn').onclick=()=>{ logBox.textContent=''; };
+document.getElementById('exportBtn').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([logBox.textContent],{type:'text/plain'}));
+  a.download='matrix-logs.txt'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* ================= WS UI ================= */
+const wsUrlEl = document.getElementById('wsUrl');
+const btnConnect = document.getElementById('btnConnect');
+const btnDisconnect = document.getElementById('btnDisconnect');
+const btnSaveUrl = document.getElementById('btnSaveUrl');
+const btnCopyUrl = document.getElementById('btnCopyUrl');
+const maskUrl = document.getElementById('maskUrl');
+
+const wsStatus = document.getElementById('wsStatus');
+const wsOrigin = document.getElementById('wsOrigin');
+const wsTable  = document.getElementById('wsTable');
+const wsDealer = document.getElementById('wsDealer');
+const wsNumber = document.getElementById('wsNumber');
+
+let sock = null;
+
+/* persist */
+(function initUrl(){
+  const saved = localStorage.getItem('sc.ws.url');
+  if(saved) wsUrlEl.value = saved;
+})();
+btnSaveUrl.onclick = ()=>{ localStorage.setItem('sc.ws.url', wsUrlEl.value.trim()); log('💾 URL salva'); };
+btnCopyUrl.onclick = ()=>{ navigator.clipboard.writeText(wsUrlEl.value.trim()); log('📋 URL copiada'); };
+
+maskUrl.onchange = ()=>{
+  const v = wsUrlEl.value.trim();
+  if(!v) return;
+  renderOriginAndTable(v);
+};
+
+/* conectar / desconectar */
+btnConnect.onclick = ()=>{
+  const url = wsUrlEl.value.trim();
+  if(!url || !/^wss?:\/\//i.test(url)) { log('URL inválida', true); return; }
+  connectWS(url);
+};
+btnDisconnect.onclick = ()=>{ if(sock){ sock.close(1000, 'manual'); } };
+
+function connectWS(url){
+  try{
+    if(sock) sock.close();
+    sock = new WebSocket(url);
+    setStatus('Conectando...', 'warn');
+    renderOriginAndTable(url);
+
+    sock.onopen = ()=>{ setStatus('Conectado', 'ok'); log('🔗 WS aberto: '+safeUrl(url)); btnDisconnect.disabled=false; };
+    sock.onerror= (e)=>{ setStatus('Erro', 'err'); log('⚠️ Erro WS: '+(e?.message||'ver console'), true); };
+    sock.onclose = (e)=>{ setStatus('Desconectado', 'err'); log(`🔌 WS fechado (code=${e.code})`); btnDisconnect.disabled=true; };
+    sock.onmessage=(ev)=>{
+      // alguns streams vêm como string; outros podem ser binários
+      let txt = '';
+      if(typeof ev.data === 'string') txt = ev.data;
+      else if(ev.data instanceof Blob){ ev.data.text().then(t=>handleFrame(t)); return; }
+      else { try{ txt = String(ev.data); }catch(_){ txt='[bin]'; }
+      handleFrame(txt);
+    };
+  }catch(err){
+    setStatus('Erro', 'err'); log('❌ Falha ao conectar: '+err.message, true);
+  }
+}
+
+/* status UI */
+function setStatus(text, kind){
+  wsStatus.textContent = text;
+  wsStatus.classList.remove('ok','err');
+  if(kind==='ok') wsStatus.classList.add('ok');
+  else if(kind==='err') wsStatus.classList.add('err');
+}
+
+/* origem/mesa a partir da URL (heurística) */
+function renderOriginAndTable(url){
+  const masked = mask(url);
+  wsOrigin.textContent = masked.host || '-';
+  wsTable.textContent  = masked.table || '-';
+}
+
+/* mascara host/tabela quando ativado */
+function mask(url){
+  try{
+    const u = new URL(url);
+    const host = maskUrl.checked ? u.host.replace(/.(?=[^.]*\.)/g,'*') : u.host;
+    // tentar inferir tableId / tableConfig
+    const table = new URLSearchParams(u.search).get('tableId') ||
+                  new URLSearchParams(u.search).get('tableConfig') || '';
+    const tbl = maskUrl.checked ? (table ? '***' : '') : table;
+    return {host, table: tbl};
+  }catch{ return {host:'-', table:'-'} }
+}
+function safeUrl(url){
+  if(!maskUrl.checked) return url;
+  const u = new URL(url);
+  u.search = ''; // esconde query
+  return u.toString()+'?***';
+}
+
+/* ================= Parse de Frames =================
+   Cobertura:
+   - Evolution: {"type":"roulette.winSpots", "args": {"result":[{"number":29,...}], "dealer":"Nome"...}}
+   - Pragmatic: {"type":"spin_result", "result":29, "dealer":"..."}  // às vezes aninhado
+   - Outros: tenta achar {"number": N} ou "winningNumber":N
+==================================================== */
+function handleFrame(txt){
+  log('[frame] '+truncate(txt, 400), true); // opcional mostrar brutos
+  let json = null;
+
+  // alguns provedores envelopam arrays de mensagens
+  try{ json = JSON.parse(txt); }catch{}
+
+  // Evolution — objeto com type
+  if(json && json.type === 'roulette.winSpots'){
+    const number = json?.args?.result?.[0]?.number;
+    const dealer = json?.args?.dealer || json?.args?.description || '-';
+    if(isFinite(number)){
+      wsNumber.textContent = String(number);
+      wsDealer.textContent = String(dealer).replace(/^Dealer\s*/i,'');
+      log(`🎯 EVOLUTION • Nº ${number} • ${wsDealer.textContent}`);
+      emitNumber(number,'evolution', wsDealer.textContent);
+      return;
+    }
+  }
+
+  // Pragmatic — pode vir como objeto simples
+  if(json && (json.type === 'spin_result' || json?.winningNumber || json?.result)){
+    const number = json.winningNumber ?? json.result ?? json?.data?.winningNumber;
+    const dealer = json.dealer || json?.data?.dealer || '-';
+    if(isFinite(number)){
+      wsNumber.textContent = String(number);
+      wsDealer.textContent = String(dealer);
+      log(`🎲 PRAGMATIC • Nº ${number} • ${dealer||'-'}`);
+      emitNumber(number,'pragmatic', dealer||'-');
+      return;
+    }
+  }
+
+  // Fallback: tentar achar padrão "number":N
+  const mNum = /"(?:(?:winningNumber)|(?:number))"\s*:\s*(\d{1,2})/.exec(txt);
+  if(mNum){
+    const n = parseInt(mNum[1],10);
+    wsNumber.textContent = String(n);
+    log(`ℹ️ Detectado número: ${n}`);
+    emitNumber(n,'site','-');
+    return;
+  }
+
+  // Sem match — apenas info
+  log('… frame sem número detectável');
+}
+
+/* util */
+function truncate(s, max){ return s.length>max ? s.slice(0,max)+' …(+)' : s; }
+
+/* emitir evento global para outras páginas (ex.: puxadores.html) */
+function emitNumber(number, platform='site', dealer='-'){
+  const payload = { number, platform, dealer, at: Date.now() };
+  window.dispatchEvent(new CustomEvent('sc:number', { detail: payload }));
+  // também salva “último” no sessionStorage (pode ser lido por outras abas)
+  sessionStorage.setItem('sc:last-number', JSON.stringify(payload));
+}
+</script>
 </body>
 </html>
