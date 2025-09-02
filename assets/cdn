@@ -1,0 +1,146 @@
+/* SCWidget v1.0 — SC Tips Live (Shadow DOM) */
+(function(w){
+  const SCW={};
+  function h(tag,attrs,html){const el=document.createElement(tag);if(attrs)for(const k in attrs){if(k==="style"&&typeof attrs[k]==="object"){for(const s in attrs[k])el.style[s]=attrs[k][s]}else el.setAttribute(k,attrs[k])}if(html!=null)el.innerHTML=html;return el}
+  function css(){return `
+    :host { all: initial; }
+    .wrap{font:14px/1.35 Inter,system-ui,Segoe UI,Arial,sans-serif;color:#e6f0ff;background:#0a0b0f;
+          border:1px solid #2b3a55;border-radius:14px;padding:12px;max-width:820px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+    .title{font-weight:800}
+    select,button{font:inherit;padding:6px 10px;border:1px solid #2b3a55;border-radius:8px;background:#0b1320;color:#e6f0ff}
+    button:hover{border-color:#00ff00;box-shadow:0 0 8px rgba(0,255,0,.2)}
+    .pill{border:1px solid #26436b;border-radius:999px;padding:4px 8px;background:#0b1320;font-size:12px}
+    .list{margin:0;padding-left:18px;max-height:320px;overflow:auto}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+    .stat{border:1px solid #1e2f4a;background:#0b1220;border-radius:8px;padding:8px;text-align:center}
+    .big{font-weight:800;color:#ffd700}
+    .status{font-size:12px;color:#ffd700}
+  `}
+
+  function createUI(root){
+    const wrap=h("div",{class:"wrap"});
+    const rowTop=h("div",{class:"row"},`
+      <span class="title">SC Tips • Live</span>
+      <span id="status" class="status">conectando…</span>
+      <span class="pill">Janela: <b id="winN">50</b></span>
+      <select id="selN">
+        <option value="25">N=25</option>
+        <option value="50" selected>N=50</option>
+        <option value="100">N=100</option>
+      </select>
+      <button id="btnCSV">Exportar CSV</button>
+    `);
+    const rowMid=h("div",{class:"row"},`
+      <label>Mesa:</label>
+      <select id="selTable"></select>
+      <span class="pill">Últimos: <b id="count">0</b></span>
+      <span class="pill">Zero/Green: <b id="zero">0</b></span>
+    `);
+    const list=h("ol",{class:"list",id:"list"});
+    const stats=h("div",{class:"stats"},`
+      <div class="stat"><div class="big" id="kRed">0</div><div>Red</div></div>
+      <div class="stat"><div class="big" id="kBlack">0</div><div>Black</div></div>
+      <div class="stat"><div class="big" id="kOdd">0</div><div>Odd</div></div>
+      <div class="stat"><div class="big" id="kEven">0</div><div>Even</div></div>
+      <div class="stat"><div class="big" id="kN">0</div><div>Itens na Janela</div></div>
+    `);
+    wrap.appendChild(rowTop);wrap.appendChild(rowMid);wrap.appendChild(list);wrap.appendChild(stats);
+    const style=h("style",null,css());root.appendChild(style);root.appendChild(wrap);
+    return {
+      statusEl: rowTop.querySelector("#status"),
+      winN: rowTop.querySelector("#winN"),
+      selN: rowTop.querySelector("#selN"),
+      btnCSV: rowTop.querySelector("#btnCSV"),
+      selTable: rowMid.querySelector("#selTable"),
+      countEl: rowMid.querySelector("#count"),
+      zeroEl: rowMid.querySelector("#zero"),
+      list, kRed: stats.querySelector("#kRed"), kBlack: stats.querySelector("#kBlack"),
+      kOdd: stats.querySelector("#kOdd"), kEven: stats.querySelector("#kEven"), kN: stats.querySelector("#kN")
+    }
+  }
+
+  function toCSV(rows){
+    return rows.map(r=>r.map(x=>{
+      const v=(x==null?"":String(x));return /[",;\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v
+    }).join(",")).join("\n")
+  }
+
+  function initMount(mount, opts){
+    const backend = (opts.backend||"http://127.0.0.1:8000").replace(/\/$/,"");
+    const tables = Array.isArray(opts.tables)&&opts.tables.length?opts.tables:["immersive","lightning","mega","roulette_live","xxxtreme"];
+    let windowSize = Math.max(1, parseInt(opts.window||50,10));
+
+    const root = mount.attachShadow({mode:"open"});
+    const ui=createUI(root);
+    ui.selTable.innerHTML = tables.map(k=>`<option value="${k}">${k}</option>`).join("");
+    ui.selN.value=String(windowSize); ui.winN.textContent=windowSize;
+
+    const MAX_RENDER=300; let buffer=[]; let current=tables[0]; let es=null;
+    const numberOf=it=>(((it.data||{}).result||{}).outcome||{}).number??null;
+    const colorOf =it=>((((it.data||{}).result||{}).outcome||{}).color||"").toLowerCase();
+    const typeOf  =it=>((((it.data||{}).result||{}).outcome||{}).type ||"").toLowerCase();
+    const whenOf  =it=>(it.data||{}).settledAt||(it.data||{}).startedAt||"";
+    const rowText =it=>`#${numberOf(it)} • ${colorOf(it)||"-"} • ${typeOf(it)||"-"} • ${new Date(whenOf(it)).toLocaleString()}`;
+
+    function renderList(){
+      ui.list.innerHTML="";
+      for(const it of buffer){const li=h("li",null,rowText(it));ui.list.appendChild(li)}
+      ui.countEl.textContent=buffer.length;
+    }
+    function addTop(it){
+      buffer.unshift(it); if(buffer.length>MAX_RENDER) buffer.length=MAX_RENDER;
+      const li=h("li",null,rowText(it));
+      ui.list.insertBefore(li, ui.list.firstChild);
+      while(ui.list.children.length>MAX_RENDER) ui.list.removeChild(ui.list.lastChild);
+      ui.countEl.textContent=ui.list.children.length; recalc();
+    }
+    const sliceN=()=>buffer.slice(0,windowSize);
+    function recalc(){
+      const s=sliceN(); let red=0,black=0,odd=0,even=0,zero=0;
+      for(const it of s){
+        const n=numberOf(it), c=colorOf(it), t=typeOf(it);
+        if(n===0||c==="green") zero++;
+        if(c==="red") red++; if(c==="black") black++;
+        if(t==="odd") odd++; if(t==="even") even++;
+      }
+      ui.kRed.textContent=red; ui.kBlack.textContent=black; ui.kOdd.textContent=odd; ui.kEven.textContent=even; ui.kN.textContent=s.length; ui.zeroEl.textContent=zero;
+    }
+
+    function switchTable(){
+      buffer=[]; renderList(); recalc(); if(es){es.close();es=null;}
+      fetch(`${backend}/api/${current}/recent?limit=120`).then(r=>r.json()).then(j=>{
+        buffer=(j.items||[]).slice(0,MAX_RENDER); renderList(); recalc();
+      }).catch(()=>{});
+      const url=`${backend}/stream/${current}`; try{es=new EventSource(url);}catch(e){ui.statusEl.textContent="erro de conexão"; return;}
+      es.onopen =()=> ui.statusEl.textContent="conectado";
+      es.onerror=()=> ui.statusEl.textContent="reconectando…";
+      es.onmessage=(ev)=>{ try{
+        const msg=JSON.parse(ev.data);
+        if(msg.type==="snapshot"){(msg.items||[]).forEach(addTop)}
+        else if(msg.type==="append"){addTop(msg.item)}
+      }catch(e){} };
+    }
+
+    ui.selN.addEventListener("change",()=>{windowSize=parseInt(ui.selN.value,10);ui.winN.textContent=windowSize;recalc()});
+    ui.btnCSV.addEventListener("click",()=>{
+      const rows=[["settledAt","startedAt","table","number","color","type","totalWinners","totalAmount"]];
+      for(const it of sliceN()){
+        const d=(it.data||{}), t=(d.table||{}).name||"", o=((d.result||{}).outcome||{});
+        rows.push([d.settledAt||"",d.startedAt||"",t,(typeof o.number==="number"?o.number:""),o.color||"",o.type||"", (it.totalWinners??""),(it.totalAmount??"")]);
+      }
+      const csv=toCSV(rows), a=h("a"); const dt=new Date().toISOString().replace(/[:T]/g,"-").slice(0,19);
+      a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+      a.download=`sc-tips_${current}_N${windowSize}_${dt}.csv`; a.click(); URL.revokeObjectURL(a.href);
+    });
+    ui.selTable.addEventListener("change",()=>{current=ui.selTable.value;switchTable()});
+    switchTable();
+  }
+
+  SCW.init=function(target, opts){
+    const el = (typeof target==="string")? document.querySelector(target) : target;
+    if(!el) throw new Error("SCWidget: alvo não encontrado");
+    initMount(el, opts||{});
+  };
+  w.SCWidget=SCW;
+})(window);
