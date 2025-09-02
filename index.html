@@ -10,6 +10,19 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="stylesheet" href="css/style.css">
   <style>
+    <!-- Onde o widget aparece -->
+<div id="sc-tips-widget"></div>
+
+<!-- Script do widget -->
+<script src="https://seu-dominio.com/assets/sc-widget.min.js"></script>
+<script>
+  // Iniciar após carregar o script
+  SCWidget.init("#sc-tips-widget", {
+    backend: "http://127.0.0.1:8000",                   // troque pela sua URL no Render quando publicar
+    tables: ["immersive","lightning","mega","roulette_live","xxxtreme"],
+    window: 50                                          // N últimos para estatística
+  });
+</script>
     #timer{font-size:28px;font-weight:700;text-align:center;margin:14px 0;color:var(--gold)}
     #logBox{background:#0a0f1a;border:1px solid var(--stroke);border-radius:12px;padding:12px;font-family:monospace;font-size:13px;height:260px;overflow-y:auto;white-space:pre-wrap;color:var(--muted)}
     .btn-sm{font-size:12px;padding:6px 10px;margin:4px 2px}
