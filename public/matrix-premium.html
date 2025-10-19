@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC Tips • Matrix Premium v3</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta name="theme-color" content="#00ff00">
+<style>
+:root {
+  --bg:#000; --panel:#061406; --card:#0a200a; --line:#123012; 
+  --txt:#e7ffe7; --muted:#b5e7c1; --gold:#ffd76a; 
+  --green:#22ff88; --red:#ff4d57; --stroke:#063;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 20% 0%, #031203 0%, #000 60%);color:var(--txt);font:15px/1.55 system-ui,Segoe UI,Roboto,Arial}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+h1{display:flex;gap:10px;align-items:center;margin:6px 0 14px}
+.logo{width:36px;height:36px;border-radius:50%;background:conic-gradient(#ffd76a,#22ff88,#ffd76a)}
+.card{background:linear-gradient(180deg, rgba(10,32,10,.98), rgba(4,16,4,.98));border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 10px 30px rgba(0,0,0,.55)}
+label{display:block;margin:.25rem 0 .25rem .25rem;color:var(--muted)}
+input,select,button{width:100%;padding:10px;border-radius:12px;border:1px solid var(--line);background:#0a1b0d;color:var(--txt)}
+button{cursor:pointer;transition:.2s transform ease}
+button:active{transform:scale(.98)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.small{font-size:12px;color:var(--muted)}
+.kvs{display:flex;gap:8px;flex-wrap:wrap}
+.kvs .pill{display:inline-flex;gap:6px;align-items:center;background:#0c2012;border:1px solid var(--line);border-radius:999px;padding:6px 10px}
+.timer{font-weight:700;background:#0c1610;border-radius:10px;padding:6px 10px;border:1px solid var(--line);text-align:center}
+#logBox{background:#0a0f1a;border:1px solid var(--stroke);border-radius:12px;padding:12px;font-family:monospace;font-size:13px;height:260px;overflow-y:auto;white-space:pre-wrap;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-top:12px}
+.num{display:flex;align-items:center;justify-content:center;height:44px;border-radius:10px;font-weight:650;border:1px solid #0004;position:relative}
+.red{background:#6b0f17} .black{background:#0e0e10} .zero{background:#0a3a0a}
+.num.hl{box-shadow:0 0 0 2px #fff3 inset, 0 0 18px rgba(34,255,136,.5)}
+.num.sug{outline:2px solid var(--green);box-shadow:0 0 14px rgba(34,255,136,.45)}
+.bar{height:10px;background:#0e1510;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-top:6px}
+.bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg, #22ff88, #53ffa8)}
+.err{color:var(--red)} .ok{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="logo"></span> SC Tips • <b>Matrix Premium v3</b> <small style="opacity:.7">WS + Proxy + IA</small></h1>
+
+  <div class="card">
+    <div class="row3">
+      <div>
+        <label>Roleta</label>
+        <select id="roulette">
+          <option>Immersive</option>
+          <option>Brazilian</option>
+          <option>Mega Fire Blaze</option>
+          <option>Lightning</option>
+          <option>XXXtreme Lightning</option>
+        </select>
+      </div>
+      <div>
+        <label>AutoSend</label>
+        <select id="autosend">
+          <option value="true">Ativo</option>
+          <option value="false" selected>Desligado</option>
+        </select>
+      </div>
+      <div>
+        <label>MinConf (%)</label>
+        <input id="minconf" type="number" min="0" max="100" step="1" value="85">
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>URL (WS/HTTP)</label>
+        <input id="srcUrl" placeholder="Cole a URL wss:// ou https:// aqui">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="btnConnect">🔌 Conectar</button>
+      </div>
+    </div>
+
+    <div class="kvs" style="margin-top:10px">
+      <span class="pill">Status: <b id="netStatus" class="err">Desconectado</b></span>
+      <span class="pill">Modo: <b id="netMode">—</b></span>
+      <span class="pill">Dealer: <b id="wsDealer">-</b></span>
+      <span class="pill">Último Nº: <b id="wsNumber">-</b></span>
+      <span class="pill timer">Cooldown: <span id="cooldown">18s</span></span>
+    </div>
+    <div class="bar"><span id="bar"></span></div>
+  </div>
+
+  <div class="card">
+    <h3>📡 CALL Automática</h3>
+    <div class="small">Cada número capturado alimenta o histórico e dispara <code>/api/suggest</code>. Se AutoSend estiver ativo, a CALL vai ao Telegram. O veredito GREEN/RED fica para a próxima rodada.</div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="card">
+    <h3>📜 Logs</h3>
+    <div class="row" style="margin-bottom:6px">
+      <input id="logFilter" type="text" placeholder="Filtrar (ex.: pragmatic, winSpots, dealer, 29)" />
+      <label class="pill"><input type="checkbox" id="fltRaw"> Mostrar frames brutos</label>
+      <button id="clearBtn">🧹 Limpar</button>
+      <button id="exportBtn">📄 Exportar TXT</button>
+    </div>
+    <div id="logBox">[Console pronto]\n</div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const redSet = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const blackSet= new Set([2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]);
+
+const grid=$("#grid"), netStatus=$("#netStatus"), netMode=$("#netMode"), wsDealer=$("#wsDealer"), wsNumber=$("#wsNumber");
+const cooldownEl=$("#cooldown"), barEl=$("#bar");
+
+function buildGrid(){
+  grid.innerHTML="";
+  for(let n=0;n<=36;n++){
+    const d=document.createElement("div");
+    d.className="num "+(n===0?"zero":(redSet.has(n)?"red":"black"));
+    d.dataset.n=n; d.textContent=n;
+    grid.appendChild(d);
+  }
+}
+buildGrid();
+
+function highlight(ultimo,suggested){
+  document.querySelectorAll(".num").forEach(el=>{
+    el.classList.remove("hl","sug");
+    const n=Number(el.dataset.n);
+    if(n===ultimo) el.classList.add("hl");
+    if(suggested && suggested.has(n)) el.classList.add("sug");
+  });
+}
+function flashBar(p){barEl.style.width=Math.max(0,Math.min(100,p))+"%";}
+
+// ===== Timer =====
+let cd=18; setInterval(()=>{ cooldownEl.textContent=(cd--)+"s"; if(cd<0) cd=18; },1000);
+
+// ===== Logs =====
+const logBox=$("#logBox"), logFilter=$("#logFilter"), fltRaw=$("#fltRaw");
+function log(m,raw=false){
+  if(raw && !fltRaw.checked) return;
+  const q=(logFilter.value||'').trim().toLowerCase();
+  const ts=new Date().toLocaleTimeString();
+  const line=`[${ts}] ${m}`;
+  if(q && !line.toLowerCase().includes(q)) return;
+  logBox.textContent+=line+"\\n";
+  logBox.scrollTop=logBox.scrollHeight;
+}
+$("#clearBtn").onclick=()=>{logBox.textContent='';};
+$("#exportBtn").onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([logBox.textContent],{type:'text/plain'}));
+  a.download='matrix-logs.txt'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+// ===== Conexão =====
+$("#btnConnect").onclick=()=>{
+  const url=$("#srcUrl").value.trim();
+  if(!url){log('URL vazia');return;}
+  localStorage.setItem('sc.src.url',url);
+  startConnection(url);
+};
+
+function setStatus(text,ok=false){
+  netStatus.textContent=text;
+  netStatus.classList.toggle('ok',ok);
+  netStatus.classList.toggle('err',!ok);
+}
+
+function startConnection(url){
+  setStatus('Conectando...');
+  if(/^wss?:/i.test(url)){tryWS(url);} else {tryHTTP(url);}
+}
+
+function tryWS(url){
+  netMode.textContent="WebSocket";
+  let sock;
+  try{
+    sock=new WebSocket(url);
+    sock.onopen=()=>{setStatus('Conectado (WS)',true);log('🔗 WS conectado');};
+    sock.onerror=()=>{setStatus('Erro WS');log('⚠️ Erro WS');tryHTTP(url.replace(/^wss:/,'https:').replace(/^ws:/,'http:'));};
+    sock.onclose=()=>{setStatus('Desconectado');log('🔌 WS fechado');};
+    sock.onmessage=(ev)=>handleText(ev.data);
+  }catch(e){setStatus('Falha WS');log('❌ WS falhou: '+e.message);}
+}
+
+function tryHTTP(url){
+  netMode.textContent="HTTP (via proxy)";
+  setStatus('Conectado (HTTP)',true);
+  async function poll(){
+    try{
+      const r=await fetch(`/api/proxy?url=${encodeURIComponent(url)}`,{cache:'no-store'});
+      let j={}; try{j=await r.json();}catch{log('⚠️ JSON incompleto');return;}
+      const num=j?.content?.[0]?.data?.result?.[0]?.number ?? j?.data?.result?.[0]?.number;
+      if(isFinite(num)) handleNumber(num,'HTTP');
+    }catch(e){setStatus('Erro HTTP');log('⚠️ '+e.message);}
+  }
+  poll(); setInterval(poll,3000);
+}
+
+function handleText(txt){
+  let json=null; try{json=JSON.parse(txt);}catch{}
+  let n=null;
+  if(json?.args?.result?.[0]?.number) n=json.args.result[0].number;
+  else if(json?.winningNumber) n=json.winningNumber;
+  if(isFinite(n)) handleNumber(n,'WS');
+}
+
+function handleNumber(number,mode){
+  wsNumber.textContent=String(number);
+  log(`🎯 Nº ${number} • via ${mode}`);
+  const key='sc:history';
+  const hist=JSON.parse(sessionStorage.getItem(key)||'[]');
+  hist.push(number); if(hist.length>50) hist.shift();
+  sessionStorage.setItem(key,JSON.stringify(hist));
+  callSuggest(hist);
+}
+
+async function callSuggest(history){
+  const auto=($("#autosend").value==='true');
+  const roulette=$("#roulette").value;
+  try{
+    const r=await fetch('/api/suggest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({history,auto_send:auto,roulette})});
+    const j=await r.json();
+    const sug=new Set(j.alvos||[]);
+    highlight(j.ultimo,sug);
+    const conf=Math.min(95,Object.keys(j.breakdown||{}).filter(k=>(j.breakdown[k]||[]).length).length*20);
+    flashBar(conf);
+  }catch(e){log('Erro /api/suggest: '+e.message);}
+}
+</script>
+</body>
+</html>
