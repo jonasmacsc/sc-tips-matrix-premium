@@ -1,12 +1,14 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" },
-    { "src": "public/**/*", "use": "@vercel/static" }
+    { "src": "app.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "api/index.py" },
-    { "src": "/matrix-premium", "dest": "/public/matrix-premium.html" },
-    { "src": "/", "dest": "/public/index.html" }
-  ]
+    { "src": "/api/(.*)", "dest": "/app.py" },
+    { "src": "/(.*)", "dest": "/app.py" }
+  ],
+  "env": {
+    "TG_TOKEN": "7317597605:AAHzvSTxLSIuiyXxvnN9MILaB1FlpHXeEcM",
+    "TG_CHAT": "-1001483425201"
+  }
 }
