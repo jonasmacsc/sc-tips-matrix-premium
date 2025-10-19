@@ -1,19 +1,11 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    { "source": "/",               "destination": "/index.html" },
-    { "source": "/estrategias",    "destination": "/estrategias.html" },
-    { "source": "/matrix-premium", "destination": "/matrix-premium.html" },
-    { "source": "/puxadores",      "destination": "/puxadores.html" },
-    { "source": "/contato",        "destination": "/contato.html" }
+  "version": 2,
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python" }
   ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=60" }
-      ]
-    }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/matrix-premium", "dest": "/public/matrix-premium.html" },
+    { "src": "/", "dest": "/public/index.html" }
   ]
 }
