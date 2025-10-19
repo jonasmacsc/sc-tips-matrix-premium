@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/main.py"
+    }
+  ],
+  "env": {
+    "TG_TOKEN": "7317597605:AAHzvSTxLSIuiyXxvnN9MILaB1FlpHXeEcM",
+    "TG_CHAT": "-1001483425201",
+    "REFRESH_SECS": "3",
+    "SEND_COOLDOWN": "18",
+    "SEND_THRESHOLD": "0.70",
+    "AUTO_SEND_DEFAULT": "1"
+  }
+}
